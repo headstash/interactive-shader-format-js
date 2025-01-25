@@ -1,8 +1,15 @@
 {
-  "name": "interactive-shader-format",
-  "version": "2.8.0",
+  "name": "@headstash/interactive-shader-format",
+  "version": "2.8.1-alpha.1",
   "description": "Rendering engine for Interactive Shader Format effects and generators",
-  "main": "src/main.js",
+  "main": "./src/main.js",
+  "exports": {
+    ".": "./src/main.js",
+    "./*": {
+      "import": "./src/*.js",
+      "require": "./src/*.js"
+    }
+  },
   "directories": {
     "example": "example"
   },
@@ -46,7 +53,7 @@
     "eslint-plugin-jsx-a11y": "^5.0.1",
     "eslint-plugin-react": "^7.0.0",
     "get-pixels": "^3.3.0",
-    "gl": "^4.0.2",
+    "gl": "^8.1.6",
     "ndarray": "^1.0.18",
     "ndarray-imshow": "^1.0.1",
     "pixelmatch": "^4.0.2",
