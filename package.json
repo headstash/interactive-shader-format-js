@@ -27,7 +27,7 @@
     "GLSL"
   ],
   "author": "Michael Feldstein",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/msfeldstein/ISF-JS-Renderer/issues"
   },
