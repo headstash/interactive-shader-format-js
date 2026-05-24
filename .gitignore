@@ -3,6 +3,7 @@ tmp
 build
 npm-debug.log
 lib/*
+.turbo
 .DS_Store
 # large binary / media — never commit these
 # audio
