@@ -1,45 +1,33 @@
-var test = require('tape');
-var fs = require('fs');
-
-var { Upgrader, Parser } = require('../dist/build-worker').interactiveShaderFormat;
+import { readFileSync } from 'fs';
+import { test, expect } from 'vitest';
+import { Upgrader, Parser } from '../src/main';
 
 function assetLoad(name) {
-  return fs.readFileSync('./tests/assets/' + name).toString();
+  return readFileSync('./tests/assets/' + name).toString();
 }
 
-test('Upgrade fragment shader to v2', (t) => {
-  var old = assetLoad('version1.fs');
-  var upgraded = Upgrader.convertFragment(old);
+test('Upgrade fragment shader to v2', () => {
+  const old = assetLoad('version1.fs');
+  const upgraded = Upgrader.convertFragment(old);
+  expect(upgraded).toBe(assetLoad('version1.upgraded.fs'));
+});
 
-  t.equal(upgraded, assetLoad('version1.upgraded.fs'), 'upgraded correctly');
-  t.end();
-})
+test('Upgrade vertex shader to v2', () => {
+  const old = assetLoad('version1.vs');
+  const upgraded = Upgrader.convertVertex(old);
+  expect(upgraded).toBe(assetLoad('version1.upgraded.vs'));
+});
 
-test('Upgrade vertex shader to v2', (t) => {
-  var old = assetLoad('version1.vs');
-  var upgraded = Upgrader.convertVertex(old);
+test('Infer ISF Versioning', () => {
+  let parser = new Parser();
+  parser.parse(assetLoad('version1.fs'));
+  expect(parser.isfVersion).toBe(1);
 
-  t.equal(upgraded, assetLoad('version1.upgraded.vs'), 'upgraded correctly');
-  t.end();
-})
-
-test('Infer ISF Versioning', function(t) {
-  var v1 = assetLoad('version1.fs');
-  var parser = new Parser();
-  parser.parse(v1);
-
-  t.equal(parser.isfVersion, 1, 'Properly detect v1 with PERSISTENT_BUFFERS');
-
-  var v1 = assetLoad('version1_basic.fs');
-  var parser = new Parser();
-  parser.parse(v1);
-
-  t.equal(parser.isfVersion, 1, 'Properly detect v1 without PERSISTENT_BUFFERS');
-
-  var v2 = assetLoad('version1.upgraded.fs');
   parser = new Parser();
-  parser.parse(v2);
+  parser.parse(assetLoad('version1_basic.fs'));
+  expect(parser.isfVersion).toBe(1);
 
-  t.equal(parser.isfVersion, 2, 'Properly detect v2');
-  t.end();
-})
+  parser = new Parser();
+  parser.parse(assetLoad('version1.upgraded.fs'));
+  expect(parser.isfVersion).toBe(2);
+});

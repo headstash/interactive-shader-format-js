@@ -1,75 +1,60 @@
-var test = require('tape');
-var fs = require('fs');
-var ISFParser = require('../dist/build-worker').interactiveShaderFormat.Parser;
+import { readFileSync } from 'fs';
+import { test, expect } from 'vitest';
+import { Parser } from '../src/main';
 
 function assetLoad(name) {
-  return fs.readFileSync('./tests/assets/' + name).toString();
+  return readFileSync('./tests/assets/' + name).toString();
 }
 
-test('Infer Generator Type', function(t) {
-  var src = assetLoad('generator.fs');
-
-  var parser = new ISFParser();
+test('Infer Generator Type', () => {
+  const src = assetLoad('generator.fs');
+  const parser = new Parser();
   parser.parse(src);
-
-  t.equal(parser.type, 'generator', 'Generator type detected');
-  t.end();
-})
-
-test('Infer Filter Type', function(t) {
-  var src = assetLoad('image-filter.fs');
-
-  var parser = new ISFParser();
-  parser.parse(src);
-
-  t.equal(parser.type, 'filter', 'Image filter type detected');
-  t.end();
-})
-
-test('Infer Transition Type', function(t) {
-  var src = assetLoad('transition.fs');
-
-  var parser = new ISFParser();
-  parser.parse(src);
-
-  t.equal(parser.type, 'transition', 'Transition type detected');
-  t.end();
-})
-
-test('Buffers correctly marked as persistent', function(t) {
-  var src = assetLoad('persistent-buffers.fs');
-
-  var parser = new ISFParser();
-  parser.parse(src);
-
-  var passes = parser.passes;
-
-  for (var i = 0; i < passes.length - 1; i++) {
-    t.equal(passes[i].persistent, true, 'Persistent buffers interpreted as such');
-  }
-
-  t.equal(passes[passes.length - 1].persistent, false, 'Non persistent buffered interpreted as such');
-  t.end();
-})
-
-test('Bad metadata gives error line', function(t) {
-  var src = assetLoad('bad-metadata.fs');
-  var parser = new ISFParser();
-  // t.throws(function() {
-    parser.parse(src);
-  // })
-  t.equal(0, 0);
-  t.end();
+  expect(parser.type).toBe('generator');
 });
 
-test('IMG_NORM_PIXEL to VVSAMPLER_2DBYNORM', function (t) {
-  let src = assetLoad('img_norm_pixel_isf.fs');
-  const parser = new ISFParser();
+test('Infer Filter Type', () => {
+  const src = assetLoad('image-filter.fs');
+  const parser = new Parser();
+  parser.parse(src);
+  expect(parser.type).toBe('filter');
+});
+
+test('Infer Transition Type', () => {
+  const src = assetLoad('transition.fs');
+  const parser = new Parser();
+  parser.parse(src);
+  expect(parser.type).toBe('transition');
+});
+
+test('Buffers correctly marked as persistent', () => {
+  const src = assetLoad('persistent-buffers.fs');
+  const parser = new Parser();
+  parser.parse(src);
+  const passes = parser.passes;
+
+  for (let i = 0; i < passes.length - 1; i++) {
+    expect(passes[i].persistent).toBe(true);
+  }
+  expect(passes[passes.length - 1].persistent).toBe(false);
+});
+
+test('Bad metadata gives error line', () => {
+  const src = assetLoad('bad-metadata.fs');
+  const parser = new Parser();
+  parser.parse(src);
+  expect(0).toBe(0);
+});
+
+test('IMG_NORM_PIXEL to VVSAMPLER_2DBYNORM', () => {
+  const src = assetLoad('img_norm_pixel_isf.fs');
+  const parser = new Parser();
   parser.parse(src);
   const { fragmentShader } = parser;
 
   const IMG_NORM_PIXEL = (variable) => `IMG_NORM_PIXEL(inputImage, ${variable});`;
-  const VVSAMPLER_2DBYNORM = (variable) => `VVSAMPLER_2DBYNORM(inputImage, _inputImage_imgRect, _inputImage_imgSize, _inputImage_flip, ${variable});`;
+  const VVSAMPLER_2DBYNORM = (variable) =>
+    `VVSAMPLER_2DBYNORM(inputImage, _inputImage_imgRect, _inputImage_imgSize, _inputImage_flip, ${variable});`;
 
   const variableTypes = [
     'isf_FragNormCoord',
@@ -81,21 +66,13 @@ test('IMG_NORM_PIXEL to VVSAMPLER_2DBYNORM', function (t) {
   ];
 
   variableTypes.forEach((variable) => {
-    const test = {
-      toReplace: IMG_NORM_PIXEL(variable),
-      expectedReplacement: VVSAMPLER_2DBYNORM(variable),
-      expectedIndex: -1
-    };
-
-    t.not(fragmentShader.indexOf(test.expectedReplacement), test.expectedIndex, test.toReplace);
+    expect(fragmentShader.indexOf(VVSAMPLER_2DBYNORM(variable))).not.toBe(-1);
   });
-  
-  t.end();
 });
 
-test('IMG_PIXEL to texture2D', function (t) {
-  let src = assetLoad('img_pixel_isf.fs');
-  const parser = new ISFParser();
+test('IMG_PIXEL to texture2D', () => {
+  const src = assetLoad('img_pixel_isf.fs');
+  const parser = new Parser();
   parser.parse(src);
   const { fragmentShader } = parser;
 
@@ -112,14 +89,6 @@ test('IMG_PIXEL to texture2D', function (t) {
   ];
 
   variableTypes.forEach((variable) => {
-    const test = {
-      toReplace: IMG_PIXEL(variable),
-      expectedReplacement: TEXTURE2D(variable),
-      expectedIndex: -1
-    };
-
-    t.not(fragmentShader.indexOf(test.expectedReplacement), test.expectedIndex, test.toReplace);
+    expect(fragmentShader.indexOf(TEXTURE2D(variable))).not.toBe(-1);
   });
-  
-  t.end();
 });
